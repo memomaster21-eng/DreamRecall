@@ -2,15 +2,17 @@ import React, { useEffect, useRef } from 'react';
 import { Modal, View, Text, StyleSheet, ScrollView, Pressable, Animated } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Dream } from '@/services/database';
+import { useDreams } from '@/hooks/useDreams';
 import { GlassCard } from './ui/GlassCard';
 import { theme } from '@/constants/theme';
+import { useAlert } from '@/template';
 
 interface DreamModalProps {
   visible: boolean;
   dream: Dream | null;
   onClose: () => void;
-  onEdit?: () => void;
   onNext?: () => void;
   showNext?: boolean;
 }
@@ -19,10 +21,12 @@ export const DreamModal: React.FC<DreamModalProps> = ({
   visible,
   dream,
   onClose,
-  onEdit,
   onNext,
   showNext = false,
 }) => {
+  const router = useRouter();
+  const { removeDream } = useDreams();
+  const { showAlert } = useAlert();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -57,6 +61,35 @@ export const DreamModal: React.FC<DreamModalProps> = ({
       day: 'numeric',
       weekday: 'long',
     });
+  };
+
+  const handleEdit = () => {
+    onClose();
+    router.push(`/edit/${dream.id}`);
+  };
+
+  const handleDelete = () => {
+    showAlert(
+      'تأكيد الحذف',
+      `هل تريد حذف الحلم "${dream.title}"؟`,
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'حذف',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeDream(dream.id);
+              onClose();
+              showAlert('تم الحذف ✨', 'تم حذف الحلم بنجاح');
+            } catch (error) {
+              console.error('Error deleting dream:', error);
+              showAlert('خطأ', 'حدث خطأ أثناء حذف الحلم');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -107,15 +140,21 @@ export const DreamModal: React.FC<DreamModalProps> = ({
             </ScrollView>
 
             <View style={styles.actions}>
-              {onEdit && (
-                <Pressable 
-                  style={styles.actionButton}
-                  onPress={onEdit}
-                >
-                  <MaterialIcons name="edit" size={20} color={theme.colors.text} />
-                  <Text style={styles.actionText}>تعديل</Text>
-                </Pressable>
-              )}
+              <Pressable 
+                style={styles.actionButton}
+                onPress={handleEdit}
+              >
+                <MaterialIcons name="edit" size={20} color={theme.colors.text} />
+                <Text style={styles.actionText}>تعديل</Text>
+              </Pressable>
+
+              <Pressable 
+                style={[styles.actionButton, styles.deleteButton]}
+                onPress={handleDelete}
+              >
+                <MaterialIcons name="delete" size={20} color={theme.colors.error} />
+                <Text style={[styles.actionText, styles.deleteText]}>حذف</Text>
+              </Pressable>
               
               {showNext && onNext && (
                 <Pressable 
@@ -201,7 +240,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
     marginTop: theme.spacing.lg,
   },
   actionButton: {
@@ -214,6 +253,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     gap: theme.spacing.xs,
   },
+  deleteButton: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+  },
   nextButton: {
     backgroundColor: theme.colors.primary,
   },
@@ -222,6 +264,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: theme.fonts.semiBold,
     color: theme.colors.text,
+  },
+  deleteText: {
+    color: theme.colors.error,
   },
   nextText: {
     color: '#FFFFFF',

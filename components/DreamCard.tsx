@@ -1,9 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Dream } from '@/services/database';
+import { useDreams } from '@/hooks/useDreams';
 import { GlassCard } from './ui/GlassCard';
 import { theme } from '@/constants/theme';
+import { useAlert } from '@/template';
 
 interface DreamCardProps {
   dream: Dream;
@@ -11,6 +14,9 @@ interface DreamCardProps {
 }
 
 export const DreamCard: React.FC<DreamCardProps> = ({ dream, onPress }) => {
+  const router = useRouter();
+  const { removeDream } = useDreams();
+  const { showAlert } = useAlert();
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('ar-SA', { 
@@ -18,6 +24,35 @@ export const DreamCard: React.FC<DreamCardProps> = ({ dream, onPress }) => {
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  const handleEdit = (e: any) => {
+    e.stopPropagation();
+    router.push(`/edit/${dream.id}`);
+  };
+
+  const handleDelete = (e: any) => {
+    e.stopPropagation();
+    showAlert(
+      'تأكيد الحذف',
+      `هل تريد حذف الحلم "${dream.title}"؟`,
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'حذف',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeDream(dream.id);
+              showAlert('تم الحذف ✨', 'تم حذف الحلم بنجاح');
+            } catch (error) {
+              console.error('Error deleting dream:', error);
+              showAlert('خطأ', 'حدث خطأ أثناء حذف الحلم');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -50,6 +85,25 @@ export const DreamCard: React.FC<DreamCardProps> = ({ dream, onPress }) => {
               ))}
             </View>
           )}
+        </View>
+
+        <View style={styles.actions}>
+          <Pressable
+            style={styles.actionButton}
+            onPress={handleEdit}
+            hitSlop={8}
+          >
+            <MaterialIcons name="edit" size={18} color={theme.colors.primary} />
+            <Text style={styles.actionText}>تعديل</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={handleDelete}
+            hitSlop={8}
+          >
+            <MaterialIcons name="delete" size={18} color={theme.colors.error} />
+            <Text style={[styles.actionText, styles.deleteText]}>حذف</Text>
+          </Pressable>
         </View>
       </GlassCard>
     </Pressable>
@@ -110,5 +164,36 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.medium,
     color: theme.colors.primaryLight,
     fontWeight: '500',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    gap: theme.spacing.xs,
+  },
+  deleteButton: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+  },
+  actionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.primary,
+  },
+  deleteText: {
+    color: theme.colors.error,
   },
 });
