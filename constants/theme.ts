@@ -1,0 +1,68 @@
+export const theme = {
+  fonts: {
+    regular: 'Cairo_400Regular',
+    medium: 'Cairo_500Medium',
+    semiBold: 'Cairo_600SemiBold',
+    bold: 'Cairo_700Bold',
+  },
+  colors: {
+    background: '#000000',
+    backgroundSecondary: '#1A0033',
+    primary: '#6A00FF',
+    primaryLight: '#8B3FFF',
+    surface: '#1a1a1a',
+    surfaceLight: '#2a2a2a',
+    text: '#FFFFFF',
+    textSecondary: '#B8B8B8',
+    textTertiary: '#666666',
+    border: '#333333',
+    success: '#4CAF50',
+    error: '#FF5252',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 48,
+  },
+  borderRadius: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+  },
+  typography: {
+    title: {
+      fontSize: 28,
+      fontWeight: '700' as const,
+      lineHeight: 36,
+      fontFamily: 'Cairo_700Bold' as const,
+    },
+    heading: {
+      fontSize: 20,
+      fontWeight: '600' as const,
+      lineHeight: 28,
+      fontFamily: 'Cairo_600SemiBold' as const,
+    },
+    body: {
+      fontSize: 16,
+      fontWeight: '400' as const,
+      lineHeight: 24,
+      fontFamily: 'Cairo_400Regular' as const,
+    },
+    caption: {
+      fontSize: 14,
+      fontWeight: '400' as const,
+      lineHeight: 20,
+      fontFamily: 'Cairo_400Regular' as const,
+    },
+    small: {
+      fontSize: 12,
+      fontWeight: '400' as const,
+      lineHeight: 16,
+      fontFamily: 'Cairo_400Regular' as const,
+    },
+  },
+};
