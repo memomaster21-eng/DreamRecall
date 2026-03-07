@@ -18,9 +18,9 @@
       }
     },
     "production": {
-      "distribution": "store",
+      "distribution": "internal",
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
       },
       "env": {
         "EAS_BUILD_NO_EXPO_GO_WARNING": "true"
