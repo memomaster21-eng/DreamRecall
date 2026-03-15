@@ -1,32 +1,37 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EAS_TOKEN }}
+
+      - name: Remove lucide-react-native
+        run: npm uninstall lucide-react-native
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps
 
-      - name: Install Expo CLI
-        run: npm install -g expo-cli eas-cli
-
-      - name: Login to Expo
-        run: eas whoami || eas login --token ${{ secrets.EXPO_TOKEN }}
-
-      - name: Build APK
-        run: eas build --platform android --profile preview --non-interactive
+      - name: Build Android APK
+        run: eas build --platform android --profile production --non-interactive --no-wait
