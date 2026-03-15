@@ -1,6 +1,4 @@
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NOTIFICATION_MESSAGES = [
@@ -24,36 +22,6 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
-
-export const requestNotificationPermissions = async (): Promise<boolean> => {
-  if (!Device.isDevice) {
-    return false;
-  }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    return false;
-  }
-
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('dream-reminders', {
-      name: 'تذكير الأحلام',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#6A00FF',
-      sound: 'default',
-    });
-  }
-
-  return true;
-};
 
 export const scheduleRecurringNotifications = async (intervalMinutes: number) => {
   await Notifications.cancelAllScheduledNotificationsAsync();

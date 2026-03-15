@@ -11,6 +11,7 @@ import { useDreams } from '@/hooks/useDreams';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { theme } from '@/constants/theme';
 import { scheduleRecurringNotifications, cancelNotifications } from '@/services/notifications';
+import { requestNotificationPermissions, openBatterySettings } from '@/services/permissions';
 import { DisplayMode } from '@/services/settings';
 import { useAlert } from '@/template';
 
@@ -40,6 +41,12 @@ export default function SettingsScreen() {
     setUpdating(true);
     try {
       if (enabled) {
+        const granted = await requestNotificationPermissions();
+        if (!granted) {
+          showAlert('تنبيه', 'الرجاء السماح بالإشعارات من إعدادات النظام');
+          setUpdating(false);
+          return;
+        }
         await scheduleRecurringNotifications(settings.notificationInterval);
       } else {
         await cancelNotifications();
@@ -309,6 +316,25 @@ export default function SettingsScreen() {
               <Text style={[styles.backupTitle, styles.dangerText]}>حذف جميع الأحلام</Text>
               <Text style={styles.backupSubtitle}>احذر: هذا الإجراء لا يمكن التراجع عنه</Text>
             </View>
+          </Pressable>
+        </GlassCard>
+
+        <GlassCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="settings-applications" size={24} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>إعدادات النظام</Text>
+          </View>
+
+          <Pressable
+            style={styles.backupButton}
+            onPress={openBatterySettings}
+          >
+            <MaterialIcons name="battery-charging-full" size={24} color={theme.colors.text} />
+            <View style={styles.backupTextContainer}>
+              <Text style={styles.backupTitle}>العمل في الخلفية</Text>
+              <Text style={styles.backupSubtitle}>منع النظام من إيقاف التطبيق</Text>
+            </View>
+            <MaterialIcons name="arrow-forward-ios" size={16} color={theme.colors.textTertiary} />
           </Pressable>
         </GlassCard>
 
