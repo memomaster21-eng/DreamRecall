@@ -122,12 +122,21 @@ export const getDreamsCount = async (): Promise<number> => {
 
 export const exportDreamsToJSON = async (): Promise<string> => {
   const dreams = await loadDreams();
-  return JSON.stringify({
+  const exportData = {
     version: '1.0',
+    app: 'DreamRecall',
     exportDate: new Date().toISOString(),
     dreamsCount: dreams.length,
-    dreams,
-  }, null, 2);
+    dreams: dreams.map(d => ({
+      id: d.id,
+      title: d.title,
+      content: d.content,
+      date: d.date,
+      tags: d.tags || '',
+      createdAt: d.createdAt,
+    })),
+  };
+  return JSON.stringify(exportData, null, 2);
 };
 
 export const importDreamsFromJSON = async (jsonData: string): Promise<{ success: number; total: number }> => {
@@ -135,19 +144,23 @@ export const importDreamsFromJSON = async (jsonData: string): Promise<{ success:
     const data = JSON.parse(jsonData);
     
     if (!data.dreams || !Array.isArray(data.dreams)) {
-      throw new Error('Invalid JSON format');
+      throw new Error('Invalid JSON format: dreams array not found');
     }
     
     const currentDreams = await loadDreams();
     const maxId = currentDreams.length > 0 ? Math.max(...currentDreams.map(d => d.id)) : 0;
     
-    const importedDreams: Dream[] = data.dreams.map((dream: any, index: number) => ({
+    const validDreams = data.dreams.filter((dream: any) => 
+      dream && typeof dream === 'object' && (dream.title || dream.content)
+    );
+    
+    const importedDreams: Dream[] = validDreams.map((dream: any, index: number) => ({
       id: maxId + index + 1,
       title: dream.title || 'بدون عنوان',
       content: dream.content || '',
       date: dream.date || new Date().toISOString(),
       tags: dream.tags || '',
-      createdAt: Date.now() + index,
+      createdAt: dream.createdAt || (Date.now() + index),
     }));
     
     const allDreams = [...currentDreams, ...importedDreams];
@@ -159,7 +172,7 @@ export const importDreamsFromJSON = async (jsonData: string): Promise<{ success:
     };
   } catch (error) {
     console.error('Error importing dreams:', error);
-    throw error;
+    throw new Error('Invalid JSON format or corrupted file');
   }
 };
 

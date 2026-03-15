@@ -100,24 +100,24 @@ export default function SettingsScreen() {
     setProcessing(true);
     try {
       const jsonData = await exportDreams();
-      const fileName = `DreamRecall_Backup_${new Date().toISOString().split('T')[0]}.json`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const fileName = `DreamRecall_${timestamp}.json`;
+      const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
       
       await FileSystem.writeAsStringAsync(fileUri, jsonData, {
         encoding: FileSystem.EncodingType.UTF8,
       });
       
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'application/json',
-          dialogTitle: 'تصدير الأحلام',
-        });
-        showAlert('نجح التصدير ✨', `تم تصدير ${dreams.length} حلم`);
-      }
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: 'حفظ نسخة احتياطية من الأحلام',
+        UTI: 'public.json',
+      });
+      
+      showAlert('تم التصدير بنجاح ✨', `تم تصدير ${dreams.length} حلم. اختر مكان الحفظ`);
     } catch (error) {
       console.error('Error exporting dreams:', error);
-      showAlert('خطأ', 'حدث خطأ أثناء التصدير');
+      showAlert('خطأ', 'حدث خطأ أثناء التصدير. حاول مرة أخرى');
     } finally {
       setProcessing(false);
     }
@@ -127,7 +127,7 @@ export default function SettingsScreen() {
     setProcessing(true);
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/json',
+        type: ['application/json', 'text/plain', '*/*'],
         copyToCacheDirectory: true,
       });
       
@@ -136,19 +136,24 @@ export default function SettingsScreen() {
         return;
       }
 
-      const fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+      const fileUri = result.assets[0].uri;
+      const fileContent = await FileSystem.readAsStringAsync(fileUri, {
         encoding: FileSystem.EncodingType.UTF8,
       });
       
       const importResult = await importDreams(fileContent);
       
-      showAlert(
-        'نجح الاستيراد ✨',
-        `تم استيراد ${importResult.success} من ${importResult.total} حلم`
-      );
+      if (importResult.success > 0) {
+        showAlert(
+          'تم الاستيراد بنجاح ✨',
+          `تمت إضافة ${importResult.success} حلم جديد من ${importResult.total} حلم في الملف`
+        );
+      } else {
+        showAlert('تنبيه', 'لم يتم استيراد أي أحلام. تحقق من صيغة الملف');
+      }
     } catch (error) {
       console.error('Error importing dreams:', error);
-      showAlert('خطأ', 'حدث خطأ أثناء الاستيراد. تأكد من صحة الملف');
+      showAlert('خطأ', 'فشل الاستيراد. تأكد من أن الملف بصيغة JSON صحيحة');
     } finally {
       setProcessing(false);
     }
